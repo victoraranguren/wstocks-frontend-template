@@ -123,17 +123,20 @@ export default async function Home() {
             <Badge className="mb-6 bg-solana-purple/20 text-solana-purple border-solana-purple/30 hover:bg-solana-purple/30">
               Built on Solana
             </Badge>
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 text-balance">
               Tokenized Securities
               <span className="block bg-gradient-to-r from-solana-green via-solana-cyan to-solana-purple bg-clip-text text-transparent">
                 On-Chain Asset Registry
               </span>
             </h1>
+
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 text-pretty">
               Explore the wStocks asset registry - bringing traditional equities
               to the Solana blockchain with full transparency and instant
               settlement.
             </p>
+
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#create"
@@ -170,6 +173,7 @@ export default async function Home() {
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
                 Register New Asset
               </h2>
+
               <p className="text-muted-foreground">
                 Create a new tokenized security on Solana
               </p>
@@ -188,16 +192,19 @@ export default async function Home() {
               <p className="text-3xl font-bold text-solana-green">2</p>
               <p className="text-sm text-muted-foreground">Registered Assets</p>
             </div>
+
             <div className="text-center">
               <p className="text-3xl font-bold text-solana-purple">$1.5M+</p>
               <p className="text-sm text-muted-foreground">
                 Total Value Locked
               </p>
             </div>
+
             <div className="text-center">
               <p className="text-3xl font-bold text-solana-cyan">400ms</p>
               <p className="text-sm text-muted-foreground">Block Time</p>
             </div>
+
             <div className="text-center">
               <p className="text-3xl font-bold text-foreground">{"< $0.01"}</p>
               <p className="text-sm text-muted-foreground">Transaction Cost</p>

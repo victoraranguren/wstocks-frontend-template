@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { WalletButtons } from "@/solana/provider/provider"
 
 export function Header() {
   return (
@@ -44,6 +45,8 @@ export function Header() {
               <div className="w-2 h-2 rounded-full bg-solana-green animate-pulse" />
               <span className="text-xs text-solana-green font-medium">Devnet</span>
             </div>
+            <WalletButtons />
+
           </div>
         </div>
       </div>
