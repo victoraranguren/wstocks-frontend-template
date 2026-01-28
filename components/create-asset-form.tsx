@@ -17,9 +17,9 @@ import {
 import { Loader2, Rocket, FileText, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS, getInitializeAssetInstructionDataEncoder, InitializeAssetInstructionDataArgs } from "@/solana/programs/rwa/client";
-import { BN } from "bn.js";
+import BN from "bn.js";
 import { PublicKey, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
-import { useSendTransaction, useWalletConnection } from "@solana/react-hooks";
+import { useProgramAccounts, useSendTransaction, useWalletConnection } from "@solana/react-hooks";
 import { address, Address } from "@solana/kit";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
@@ -68,6 +68,8 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
 
   const { send, isSending, status: statusTransaction, signature, error, reset } = useSendTransaction();
 
+  const { accounts, isLoading, isError, refresh } = useProgramAccounts("jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC");
+  console.log(accounts);
   const walletAddress = wallet?.account.address;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,7 +179,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
       console.log("submissionData: ", { submissionData });
 
       interface InitializeAssetInstructionArgs {
-        id: BN,
+        id: bigint,
         assetIsin: string,
         assetSymbol: string,
         assetType: number,
@@ -189,7 +191,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
       };
 
       const submissionFormattedData: InitializeAssetInstructionArgs = {
-        id: new BN(Date.now()),
+        id: BigInt(Date.now()),
         assetIsin: submissionData.assetIsin,
         assetSymbol: submissionData.assetSymbol.toUpperCase(),
         assetType: submissionData.assetType,
@@ -216,8 +218,8 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
       console.log("=====================================");
 
       try {
-        const uniqueIdBuffer = submissionFormattedData.id.toArrayLike(Buffer, "le", 8);
-
+        const uniqueIdBuffer = Buffer.alloc(8);
+        uniqueIdBuffer.writeBigUInt64LE(submissionFormattedData.id);
         const [assetRegistryPda] = PublicKey.findProgramAddressSync(
           [
             Buffer.from("asset_registry"),

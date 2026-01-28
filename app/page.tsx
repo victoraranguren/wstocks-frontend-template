@@ -1,111 +1,77 @@
+"use client";
+
 import { Header } from "@/components/header";
 import { AssetRegistryCard } from "@/components/asset-registry-card";
 import { TokenMetadataCard } from "@/components/token-metadata-card";
 import { CreateAssetForm } from "@/components/create-asset-form";
 import { Badge } from "@/components/ui/badge";
 import { Database, Coins, ArrowRight, PlusCircle } from "lucide-react";
-import { connect } from "solana-kite";
 import * as programClient from "../solana/programs/rwa/client";
 import {
-  getAssetRegistryDecoder,
-  ASSET_REGISTRY_DISCRIMINATOR,
-  ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
-} from "../solana/programs/rwa/client";
-import {
   AssetRegistryData,
+  AssetRegistryUI,
   transformAssetAccount,
 } from "@/solana/programs/rwa/types/asset-registry";
-import { getTokenMetadataByAssetRegistryCollection } from "@/solana/programs/rwa/types/tokens";
+import {
+  getTokenMetadataByAssetRegistryCollection,
+  TokenMetadataUI,
+} from "@/solana/programs/rwa/types/tokens";
+import { address } from "@solana/kit";
+import { autoDiscover, createClient } from "@solana/client";
+import { useEffect, useState } from "react";
 
-// Asset Registry Data from Solana
-// const assetRegistryData = [
-//   {
-//     executable: false,
-//     lamports: 3118080,
-//     programAddress: "jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC",
-//     space: 320,
-//     address: "CRsTiPUx8cqbysPzhrdDaUdDgh2cy4PyqXLsHWvX7sVn",
-//     data: {
-//       id: 1769315914076,
-//       authority: "4Uoi3NxSQbp8dFqumxHxgXzJiEXvN5VvGCtUGTNuwAW6",
-//       mint: "FcqYDj4LjdptFMdMYd5MbuRbDt3gBHZJRXJ7vcqJMQ6b",
-//       assetSymbol: "WAAPL",
-//       assetIsin: "VE-WAAPL-001",
-//       legalDocUri: "https://www.youtube.com/watch?v=MOl4s-VIuLQ",
-//       creationDate: 1769315914,
-//       assetType: 0,
-//       bump: 255,
-//     },
-//     exists: true,
-//   },
-//   {
-//     executable: false,
-//     lamports: 3118080,
-//     programAddress: "jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC",
-//     space: 320,
-//     address: "EzqWg4Jj1Mdip5FdCNDbhjWHM5ip1GdbnNh5Asuzz2sm",
-//     data: {
-//       id: 1769316532249,
-//       authority: "4Uoi3NxSQbp8dFqumxHxgXzJiEXvN5VvGCtUGTNuwAW6",
-//       mint: "FoPUWmCdjBktTnni7piGGE387hMvNmWnCcTpS5NtT8z1",
-//       assetSymbol: "WTSLA",
-//       assetIsin: "VE-WTSLA-002",
-//       legalDocUri: "https://www.youtube.com/watch?v=MOl4s-VIuLQ",
-//       creationDate: 1769316532,
-//       assetType: 0,
-//       bump: 255,
-//     },
-//     exists: true,
-//   },
-// ];
+export default function Home() {
+  const [assetRegistryData, setAssetRegistryData] =
+    useState<AssetRegistryUI[]>();
+  const [tokenMetadata, setTokenMetadata] = useState<TokenMetadataUI[]>();
 
-// Token Metadata derived from Asset Registry
-// const tokenMetadata = [
-//   {
-//     mint: "FcqYDj4LjdptFMdMYd5MbuRbDt3gBHZJRXJ7vcqJMQ6b",
-//     symbol: "WAAPL",
-//     name: "Wrapped Apple Inc.",
-//     decimals: 6,
-//     supply: "1,000,000",
-//     authority: "4Uoi3NxSQbp8dFqumxHxgXzJiEXvN5VvGCtUGTNuwAW6",
-//     programId: "jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC",
-//   },
-//   {
-//     mint: "FoPUWmCdjBktTnni7piGGE387hMvNmWnCcTpS5NtT8z1",
-//     symbol: "WTSLA",
-//     name: "Wrapped Tesla Inc.",
-//     decimals: 6,
-//     supply: "500,000",
-//     authority: "4Uoi3NxSQbp8dFqumxHxgXzJiEXvN5VvGCtUGTNuwAW6",
-//     programId: "jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC",
-//   },
-// ];
-
-export default async function Home() {
-  const connection = connect("devnet");
-  const assetRegistryFetch: any = async () => {
-    const assetRegistryAccounts = connection.getAccountsFactory(
-      ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
-      ASSET_REGISTRY_DISCRIMINATOR,
-      getAssetRegistryDecoder(),
-    );
-    return await assetRegistryAccounts();
-  };
-
-  const assetRegistryAccounts: AssetRegistryData[] = await assetRegistryFetch();
-
-  console.log("assetRegistryAccounts: ", assetRegistryAccounts);
-
-  const assetRegistryData = assetRegistryAccounts.map((assetregistry) => {
-    return transformAssetAccount(assetregistry);
+  const client = createClient({
+    endpoint: "https://api.devnet.solana.com",
+    walletConnectors: autoDiscover(),
   });
 
-  console.log("assetRegistryData", assetRegistryData);
+  const setData = async () => {
+    const getAssetRegistrysAccountsRaw = await client.runtime.rpc
+      .getProgramAccounts(
+        address("jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC"),
+        {
+          encoding: "base64",
+        },
+      )
+      .send();
 
-  const tokenMetadata = await getTokenMetadataByAssetRegistryCollection(assetRegistryAccounts)
+    console.log("getAssetRegistrysAccountsRaw: ", getAssetRegistrysAccountsRaw);
 
-  console.log("tokenMetadata front: ", tokenMetadata);
+    const getProgramAccounts = getAssetRegistrysAccountsRaw.filter(
+      (account) => Number(account.account.space) === 320,
+    );
 
+    const accountsRaw = getProgramAccounts.map((account) =>
+      address(account.pubkey.toString()),
+    );
+
+    const accounts: any = await programClient.fetchAllAssetRegistry(
+      client.runtime.rpc,
+      accountsRaw,
+    );
+
+    const assetRegistryAccounts: AssetRegistryData[] = accounts;
+
+    const assetRegistryData = assetRegistryAccounts.map((assetregistry) => {
+      return transformAssetAccount(assetregistry);
+    });
+
+    setAssetRegistryData(assetRegistryData);
+
+    const tokenMetadata = await getTokenMetadataByAssetRegistryCollection(
+      assetRegistryAccounts,
+    );
+    setTokenMetadata(tokenMetadata);
+  };
+
+  useEffect(() => {
+    setData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,9 +197,10 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {assetRegistryData.map((asset) => (
-              <AssetRegistryCard key={asset.address} asset={asset} />
-            ))}
+            {assetRegistryData &&
+              assetRegistryData.map((asset) => (
+                <AssetRegistryCard key={asset.address} asset={asset} />
+              ))}
           </div>
         </div>
       </section>
@@ -256,9 +223,10 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {tokenMetadata.map((token) => (
-              <TokenMetadataCard key={token.mint} token={token} />
-            ))}
+            {tokenMetadata &&
+              tokenMetadata.map((token) => (
+                <TokenMetadataCard key={token.mint} token={token} />
+              ))}
           </div>
         </div>
       </section>
