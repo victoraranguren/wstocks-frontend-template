@@ -18,13 +18,12 @@ import {
 } from "@/solana/programs/rwa/types/tokens";
 import { address } from "@solana/kit";
 import { autoDiscover, createClient } from "@solana/client";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
-  const [assetRegistryData, setAssetRegistryData] =
-    useState<AssetRegistryUI[]>();
-  const [tokenMetadata, setTokenMetadata] = useState<TokenMetadataUI[]>();
-
+  // const [assetRegistryData, setAssetRegistryData] =
+  //   useState<AssetRegistryUI[]>();
+  // const [tokenMetadata, setTokenMetadata] = useState<TokenMetadataUI[]>();
   const client = createClient({
     endpoint: "https://api.devnet.solana.com",
     walletConnectors: autoDiscover(),
@@ -61,17 +60,25 @@ export default function Home() {
       return transformAssetAccount(assetregistry);
     });
 
-    setAssetRegistryData(assetRegistryData);
+    //setAssetRegistryData(assetRegistryData);
 
     const tokenMetadata = await getTokenMetadataByAssetRegistryCollection(
       assetRegistryAccounts,
     );
-    setTokenMetadata(tokenMetadata);
+
+    //setTokenMetadata(tokenMetadata);
+    return {
+      assetRegistryData,
+      tokenMetadata,
+    };
   };
 
-  useEffect(() => {
-    setData();
-  }, []);
+  const { data } = useQuery({
+    queryKey: ["assets"],
+    queryFn: async () => {
+      return await setData();
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,7 +162,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-solana-green">2</p>
+              <p className="text-3xl font-bold text-solana-green">
+                {data && data?.assetRegistryData.length}
+              </p>
               <p className="text-sm text-muted-foreground">Registered Assets</p>
             </div>
 
@@ -197,8 +206,9 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {assetRegistryData &&
-              assetRegistryData.map((asset) => (
+            {data &&
+              data?.assetRegistryData &&
+              data?.assetRegistryData.map((asset) => (
                 <AssetRegistryCard key={asset.address} asset={asset} />
               ))}
           </div>
@@ -223,8 +233,9 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {tokenMetadata &&
-              tokenMetadata.map((token) => (
+            {data &&
+              data?.tokenMetadata &&
+              data?.tokenMetadata.map((token) => (
                 <TokenMetadataCard key={token.mint} token={token} />
               ))}
           </div>
@@ -237,7 +248,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-solana-green to-solana-purple flex items-center justify-center">
-                <span className="text-sm font-black text-background">xS</span>
+                <span className="text-sm font-black text-background">wS</span>
               </div>
               <span className="font-semibold text-foreground">wStocks</span>
             </div>

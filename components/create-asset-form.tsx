@@ -16,12 +16,21 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Rocket, FileText, Coins } from "lucide-react";
 import { toast } from "sonner";
-import { ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS, getInitializeAssetInstructionDataEncoder, InitializeAssetInstructionDataArgs } from "@/solana/programs/rwa/client";
+import {
+  ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
+  getInitializeAssetInstructionDataEncoder,
+  InitializeAssetInstructionDataArgs,
+} from "@/solana/programs/rwa/client";
 import BN from "bn.js";
 import { PublicKey, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
-import { useProgramAccounts, useSendTransaction, useWalletConnection } from "@solana/react-hooks";
+import {
+  useProgramAccounts,
+  useSendTransaction,
+  useWalletConnection,
+} from "@solana/react-hooks";
 import { address, Address } from "@solana/kit";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AssetRegistryFormData {
   assetSymbol: string;
@@ -44,31 +53,40 @@ type RegistryFormData = {
   assetIsin: string;
   legalDocUri: string;
   assetType: number;
-  metadata: TokenMetadataFormData,
-}
+  metadata: TokenMetadataFormData;
+};
 
 interface CreateAssetFormProps {
   onSubmit?: (data: RegistryFormData) => void;
 }
 
-const MOCK_LEGAL_DOC_URI = "https://red-junior-hookworm-237.mypinata.cloud/ipfs/bafkreifhtpftpsozdrox4ihxyfunlrdoflmgpan7ttrgyqnj5vw6ro77ya"
+const MOCK_LEGAL_DOC_URI =
+  "https://red-junior-hookworm-237.mypinata.cloud/ipfs/bafkreifhtpftpsozdrox4ihxyfunlrdoflmgpan7ttrgyqnj5vw6ro77ya";
 
 export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
-  // This hook gives you everything you need for wallet connection
+  const queryClient = useQueryClient();
   const {
-    connectors,      // Available wallet connectors
-    connect,         // Connect to a wallet
-    disconnect,      // Disconnect current wallet
-    wallet,          // Current wallet session
-    status,          // 'disconnected' | 'connecting' | 'connected'
+    connectors, // Available wallet connectors
+    connect, // Connect to a wallet
+    disconnect, // Disconnect current wallet
+    wallet, // Current wallet session
+    status, // 'disconnected' | 'connecting' | 'connected'
     currentConnector, // Current connected wallet info,
     connecting,
-
   } = useWalletConnection();
 
-  const { send, isSending, status: statusTransaction, signature, error, reset } = useSendTransaction();
+  const {
+    send,
+    isSending,
+    status: statusTransaction,
+    signature,
+    error,
+    reset,
+  } = useSendTransaction();
 
-  const { accounts, isLoading, isError, refresh } = useProgramAccounts("jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC");
+  const { accounts, isLoading, isError, refresh } = useProgramAccounts(
+    "jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC",
+  );
   console.log(accounts);
   const walletAddress = wallet?.account.address;
 
@@ -89,7 +107,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
     assetIsin: "",
     legalDocUri: MOCK_LEGAL_DOC_URI,
     assetType: 0,
-    metadata: tokenData
+    metadata: tokenData,
   });
 
   // Validation
@@ -162,7 +180,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
     setIsSubmitting(true);
 
     try {
-      if (!walletAddress) return
+      if (!walletAddress) return;
       // Prepare the data for Solana program call
       const submissionData = {
         ...registryData,
@@ -179,16 +197,16 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
       console.log("submissionData: ", { submissionData });
 
       interface InitializeAssetInstructionArgs {
-        id: bigint,
-        assetIsin: string,
-        assetSymbol: string,
-        assetType: number,
-        legalDocUri: string,
-        name: string,
-        decimals: number,
-        symbol: string,
-        uri: string
-      };
+        id: bigint;
+        assetIsin: string;
+        assetSymbol: string;
+        assetType: number;
+        legalDocUri: string;
+        name: string;
+        decimals: number;
+        symbol: string;
+        uri: string;
+      }
 
       const submissionFormattedData: InitializeAssetInstructionArgs = {
         id: BigInt(Date.now()),
@@ -199,7 +217,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
         name: submissionData.metadata.name,
         decimals: submissionData.metadata.decimals,
         symbol: submissionData.metadata.symbol,
-        uri: submissionData.metadata.uri
+        uri: submissionData.metadata.uri,
       };
 
       console.log("submissionFormattedData: ", { submissionFormattedData });
@@ -226,17 +244,18 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
             new PublicKey(walletAddress.toString()).toBuffer(),
             uniqueIdBuffer,
           ],
-          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString())
+          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
         );
         const [mint] = PublicKey.findProgramAddressSync(
           [Buffer.from("mint"), uniqueIdBuffer],
-          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString())
+          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
         );
-        const SYSTEM_PROGRAM_ADDRESS = "11111111111111111111111111111111" as Address;
+        const SYSTEM_PROGRAM_ADDRESS =
+          "11111111111111111111111111111111" as Address;
         const METADATA_SEED = "metadata";
 
         const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-          "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+          "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
         );
 
         const [metadataAddress] = PublicKey.findProgramAddressSync(
@@ -245,7 +264,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
             TOKEN_METADATA_PROGRAM_ID.toBuffer(),
             mint.toBuffer(),
           ],
-          TOKEN_METADATA_PROGRAM_ID
+          TOKEN_METADATA_PROGRAM_ID,
         );
 
         const instruction = {
@@ -259,18 +278,21 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
             { address: address(TOKEN_PROGRAM_ID.toString()), role: 0 }, // Token Program
             { address: address(TOKEN_METADATA_PROGRAM_ID.toString()), role: 0 }, // Token Metadata Program
             { address: address(SYSVAR_RENT_PUBKEY.toString()), role: 0 }, // Rent Program
-
           ],
-          data: getInitializeAssetInstructionDataEncoder().encode(submissionFormattedData)
-
-        }
+          data: getInitializeAssetInstructionDataEncoder().encode(
+            submissionFormattedData,
+          ),
+        };
 
         const signature = await send({
           instructions: [instruction],
         });
 
         console.log("Tx signature: ", signature);
+
         const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+        await queryClient.invalidateQueries({ queryKey: ["assets"] });
 
         toast("Transaction Successful", {
           description: `Asset ${registryData.assetSymbol.toUpperCase()} has been registered.`,
@@ -282,15 +304,12 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
         });
       } catch (error) {
         console.log("Tx error: ", { error });
-
       }
 
       // Call optional onSubmit callback
       // if (onSubmit) {
       //   onSubmit(submissionData);
       // }
-
-
 
       // Reset form
       // setRegistryData({
@@ -575,7 +594,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={status != "connected" || isSubmitting}
+          disabled={status !== "connected" || isSubmitting}
           className="w-full h-12 bg-gradient-to-r from-solana-green to-solana-cyan text-background font-semibold text-base hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? (
@@ -586,15 +605,16 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
           ) : (
             <>
               <Rocket className="w-5 h-5 mr-2" />
-              {status === "connected" ? "Register Asset on Solana" : "Connect wallet first"}
+              {status === "connected"
+                ? "Register Asset on Solana"
+                : "Connect wallet first"}
             </>
           )}
-
         </Button>
       </form>
 
       {/* Bottom gradient */}
       <div className="h-1 bg-gradient-to-r from-solana-green via-solana-purple to-solana-cyan opacity-50" />
-    </Card >
+    </Card>
   );
 }

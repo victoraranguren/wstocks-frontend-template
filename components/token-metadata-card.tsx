@@ -1,18 +1,25 @@
-"use client"
+"use client";
 
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Copy, ExternalLink, Check, Plus, PlusCircle } from "lucide-react"
-import { MouseEvent, useState } from "react"
-import { Button } from "./ui/button"
-import { toast } from "sonner"
-import { ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS, getMintAssetInstructionDataEncoder } from "@/solana/programs/rwa/client"
-import { Address, address } from "@solana/kit"
-import { useSendTransaction, useWalletConnection } from "@solana/react-hooks"
-import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token"
-import { PublicKey, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
-import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token"
-import BN from "bn.js"
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Copy, ExternalLink, Check, Plus, PlusCircle } from "lucide-react";
+import { MouseEvent, useState } from "react";
+import { Button } from "./ui/button";
+import { toast } from "sonner";
+import {
+  ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
+  getMintAssetInstructionDataEncoder,
+} from "@/solana/programs/rwa/client";
+import { Address, address } from "@solana/kit";
+import { useSendTransaction, useWalletConnection } from "@solana/react-hooks";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { PublicKey, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import BN from "bn.js";
+import { useQueryClient } from "@tanstack/react-query";
 
 type TokenMetadata = {
   mint: string;
@@ -23,50 +30,61 @@ type TokenMetadata = {
   authority: string;
   programId: string;
   assetRegistryId: number;
-}
+};
 
 interface TokenMetadataCardProps {
-  token: TokenMetadata
+  token: TokenMetadata;
 }
 
 export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
+  const queryClient = useQueryClient();
   const {
-    connectors,      // Available wallet connectors
-    connect,         // Connect to a wallet
-    disconnect,      // Disconnect current wallet
-    wallet,          // Current wallet session
-    status,          // 'disconnected' | 'connecting' | 'connected'
+    connectors, // Available wallet connectors
+    connect, // Connect to a wallet
+    disconnect, // Disconnect current wallet
+    wallet, // Current wallet session
+    status, // 'disconnected' | 'connecting' | 'connected'
     currentConnector, // Current connected wallet info,
     connecting,
-
   } = useWalletConnection();
 
-  const { send, isSending, status: statusTransaction, signature, error, reset } = useSendTransaction();
+  const {
+    send,
+    isSending,
+    status: statusTransaction,
+    signature,
+    error,
+    reset,
+  } = useSendTransaction();
 
   const walletAddress = wallet?.account.address;
 
-  const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 8)}...${addr.slice(-6)}`
-  }
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+  };
 
   const copyToClipboard = async (text: string, field: string) => {
-    await navigator.clipboard.writeText(text)
-    setCopiedField(field)
-    setTimeout(() => setCopiedField(null), 2000)
-  }
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
-  const solscanUrl = `https://solscan.io/token/${token.mint}`
+  const solscanUrl = `https://solscan.io/token/${token.mint}`;
 
   const onIncrement = async (e: MouseEvent) => {
     console.log("e: ", { e });
     console.log("token: ", { token });
     try {
-      if (!walletAddress) return
+      if (!walletAddress) return;
 
       try {
-        const uniqueIdBuffer = new BN(token.assetRegistryId).toArrayLike(Buffer, "le", 8);
+        const uniqueIdBuffer = new BN(token.assetRegistryId).toArrayLike(
+          Buffer,
+          "le",
+          8,
+        );
 
         const [assetRegistryPda] = PublicKey.findProgramAddressSync(
           [
@@ -74,15 +92,19 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
             new PublicKey(walletAddress.toString()).toBuffer(),
             uniqueIdBuffer,
           ],
-          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString())
+          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
         );
         const [mint] = PublicKey.findProgramAddressSync(
           [Buffer.from("mint"), uniqueIdBuffer],
-          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString())
+          new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
         );
-        const SYSTEM_PROGRAM_ADDRESS = "11111111111111111111111111111111" as Address;
+        const SYSTEM_PROGRAM_ADDRESS =
+          "11111111111111111111111111111111" as Address;
 
-        const destinyAssetTokenAccount = getAssociatedTokenAddressSync(new PublicKey(token.mint), new PublicKey(walletAddress))
+        const destinyAssetTokenAccount = getAssociatedTokenAddressSync(
+          new PublicKey(token.mint),
+          new PublicKey(walletAddress),
+        );
 
         const instruction = {
           programAddress: ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
@@ -96,18 +118,23 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
             { address: address(TOKEN_PROGRAM_ID.toString()), role: 0 }, // Token Program
             { address: address(ASSOCIATED_PROGRAM_ID.toString()), role: 0 }, // Associated Token Program
             { address: address(SYSVAR_RENT_PUBKEY.toString()), role: 0 }, // Rent Program
-
           ],
-          data: getMintAssetInstructionDataEncoder().encode({ amountTokens: 1000000 })
-
-        }
+          data: getMintAssetInstructionDataEncoder().encode({
+            amountTokens: 1000000,
+          }),
+        };
 
         const signature = await send({
           instructions: [instruction],
         });
 
         console.log("Tx signature: ", signature);
+
         const solscanUrl = `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+        console.log("Tx signature: ", solscanUrl);
+
+        await queryClient.invalidateQueries({ queryKey: ["assets"] });
 
         toast("Transaction Successful", {
           description: `Asset ${token.name} has been supply minted.`,
@@ -119,7 +146,6 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
         });
       } catch (error) {
         console.log("Tx error: ", { error });
-
       }
     } catch (error) {
       console.error("Transaction failed:", error);
@@ -130,7 +156,7 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
             : "An unexpected error occurred. Please try again.",
       });
     }
-  }
+  };
 
   return (
     <Card className="glass-card overflow-hidden group hover:border-solana-purple/50 transition-all duration-300">
@@ -156,7 +182,9 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
               </div>
 
               <div>
-                <h3 className="text-2xl font-bold text-foreground">{token.symbol}</h3>
+                <h3 className="text-2xl font-bold text-foreground">
+                  {token.symbol}
+                </h3>
                 <p className="text-muted-foreground">{token.name}</p>
               </div>
             </div>
@@ -173,11 +201,15 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-secondary/50 rounded-xl p-4 border border-border">
             <p className="text-xs text-muted-foreground mb-1">Decimals</p>
-            <p className="text-xl font-bold text-foreground">{token.decimals}</p>
+            <p className="text-xl font-bold text-foreground">
+              {token.decimals}
+            </p>
           </div>
           <div className="bg-secondary/50 rounded-xl p-4 border border-border">
             <p className="text-xs text-muted-foreground mb-1">Supply</p>
-            <p className="text-xl font-bold text-solana-green">{token.supply || "∞"}</p>
+            <p className="text-xl font-bold text-solana-green">
+              {token.supply || "∞"}
+            </p>
           </div>
         </div>
       </div>
@@ -188,24 +220,24 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
           label="Mint Address"
           address={token.mint}
           truncated={truncateAddress(token.mint)}
-          onCopy={() => copyToClipboard(token.mint, 'mint')}
-          copied={copiedField === 'mint'}
+          onCopy={() => copyToClipboard(token.mint, "mint")}
+          copied={copiedField === "mint"}
           accentColor="solana-green"
         />
         <AddressRow
           label="Authority"
           address={token.authority}
           truncated={truncateAddress(token.authority)}
-          onCopy={() => copyToClipboard(token.authority, 'authority')}
-          copied={copiedField === 'authority'}
+          onCopy={() => copyToClipboard(token.authority, "authority")}
+          copied={copiedField === "authority"}
           accentColor="solana-purple"
         />
         <AddressRow
           label="Program ID"
           address={token.programId}
           truncated={truncateAddress(token.programId)}
-          onCopy={() => copyToClipboard(token.programId, 'program')}
-          copied={copiedField === 'program'}
+          onCopy={() => copyToClipboard(token.programId, "program")}
+          copied={copiedField === "program"}
           accentColor="solana-cyan"
         />
       </div>
@@ -226,7 +258,9 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
           onClick={async (e) => await onIncrement(e)}
           className="flex items-center justify-center gap-2 w-full py-5 rounded-xl bg-gradient-to-r to-solana-green/20 from-solana-purple/20 border border-solana-green/30 text-foreground hover:border-solana-green/60 transition-all group/link"
         >
-          <span className="text-sm font-medium">Increase supply (1M tokens)</span>
+          <span className="text-sm font-medium">
+            Increase supply (1M tokens)
+          </span>
           <PlusCircle className="w-4 h-4 group-hover/link:translate-x-0.5 transition-transform" />
         </Button>
       </div>
@@ -234,19 +268,25 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
       {/* Bottom gradient accent */}
       <div className="h-1 bg-gradient-to-r from-solana-purple via-solana-cyan to-solana-green opacity-50 group-hover:opacity-100 transition-opacity" />
     </Card>
-  )
+  );
 }
 
 interface AddressRowProps {
-  label: string
-  address: string
-  truncated: string
-  onCopy: () => void
-  copied: boolean
-  accentColor: string
+  label: string;
+  address: string;
+  truncated: string;
+  onCopy: () => void;
+  copied: boolean;
+  accentColor: string;
 }
 
-function AddressRow({ label, truncated, onCopy, copied, accentColor }: AddressRowProps) {
+function AddressRow({
+  label,
+  truncated,
+  onCopy,
+  copied,
+  accentColor,
+}: AddressRowProps) {
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border hover:border-border/80 transition-colors">
       <div>
@@ -265,5 +305,5 @@ function AddressRow({ label, truncated, onCopy, copied, accentColor }: AddressRo
         )}
       </button>
     </div>
-  )
+  );
 }
