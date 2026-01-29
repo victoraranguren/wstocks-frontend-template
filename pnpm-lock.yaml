@@ -152,6 +152,9 @@ importers:
       cmdk:
         specifier: 1.0.4
         version: 1.0.4(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      connectorkit:
+        specifier: link:@solana/client/connectorkit
+        version: link:@solana/client/connectorkit
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
@@ -161,6 +164,9 @@ importers:
       gill:
         specifier: ^0.14.0
         version: 0.14.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      headless:
+        specifier: link:@solana/connector/headless
+        version: link:@solana/connector/headless
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
