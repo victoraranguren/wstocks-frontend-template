@@ -61,50 +61,25 @@ export function AssetRegistryCard({ asset }: AssetRegistryCardProps) {
 
   const creationDate = new Date(Number(asset.data.creationDate) * 1000);
 
-  const onDelete = async (e: MouseEvent) => {
-    console.log("e: ", { e });
+  const onDelete = async () => {
     console.log("asset: ", { asset });
     try {
       if (!walletAddress) return;
 
       try {
-        // const uniqueIdBuffer = new BN(token.assetRegistryId).toArrayLike(
-        //   Buffer,
-        //   "le",
-        //   8,
-        // );
-
-        // const [assetRegistryPda] = PublicKey.findProgramAddressSync(
-        //   [
-        //     Buffer.from("asset_registry"),
-        //     new PublicKey(walletAddress.toString()).toBuffer(),
-        //     uniqueIdBuffer,
-        //   ],
-        //   new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
-        // );
-        // const [mint] = PublicKey.findProgramAddressSync(
-        //   [Buffer.from("mint"), uniqueIdBuffer],
-        //   new PublicKey(ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS.toString()),
-        // );
-        const SYSTEM_PROGRAM_ADDRESS =
-          "11111111111111111111111111111111" as Address;
-
+        // Prepare the CloseAsset instruction to close the on-chain asset registry account
         const instruction = {
           programAddress: ANCHOR_RWA_TEMPLATE_PROGRAM_ADDRESS,
           accounts: [
-            { address: address(asset.address), role: 1 }, // Asset
-            // { address: address(mint.toString()), role: 1 }, // Writable
-            { address: address(walletAddress.toString()), role: 3 }, // WritableSigner
-            // { address: address(walletAddress.toString()), role: 0 }, // destiny
-            // { address: address(destinyAssetTokenAccount.toString()), role: 1 }, // ATA destiny
-            // { address: address(SYSTEM_PROGRAM_ADDRESS.toString()), role: 0 }, // Readonly
-            // { address: address(TOKEN_PROGRAM_ID.toString()), role: 0 }, // Token Program
-            // { address: address(ASSOCIATED_PROGRAM_ID.toString()), role: 0 }, // Associated Token Program
-            // { address: address(SYSVAR_RENT_PUBKEY.toString()), role: 0 }, // Rent Program
+            // The asset registry account PDA to be closed/deleted (role 1 = Writable)
+            { address: address(asset.address), role: 1 }, 
+            // The authority (wallet owner) signing the transaction to approve deletion and receive recovered rent lamports (role 3 = WritableSigner)
+            { address: address(walletAddress.toString()), role: 3 }, 
           ],
           data: getCloseAssetInstructionDataEncoder().encode({}),
         };
 
+        // Send the instruction as a transaction using the connected wallet provider
         const signature = await send({
           instructions: [instruction],
         });
@@ -115,10 +90,11 @@ export function AssetRegistryCard({ asset }: AssetRegistryCardProps) {
 
         console.log("Tx signature: ", solscanUrl);
 
+        // Invalidate query to trigger refetching of the updated assets list
         await queryClient.invalidateQueries({ queryKey: ["assets"] });
 
         toast("Transaction Successful", {
-          description: `Asset ${asset.data.assetName} has been closed account.`,
+          description: `Asset ${asset.data.assetName} account has been closed.`,
           className: "border-solana-green/50 bg-solana-green/10",
           action: {
             label: "View on Solscan",
@@ -232,7 +208,7 @@ export function AssetRegistryCard({ asset }: AssetRegistryCardProps) {
           </div>
 
           <Button
-            onClick={async (e: MouseEvent) => await onDelete(e)}
+            onClick={onDelete}
             className="flex items-center justify-center gap-2 w-full py-5 rounded-xl bg-gradient-to-r to-solana-green/20 from-solana-purple/20 border border-solana-green/30 text-foreground hover:border-solana-green/60 transition-all group/link"
           >
             <span className="text-sm font-medium">Delete Asset Registry</span>

@@ -42,11 +42,10 @@ interface AssetRegistryFormData {
 }
 
 interface TokenMetadataFormData {
-  name: string;
-  symbol: string;
-  decimals: number;
-  //initialSupply: string;
-  uri: string;
+  name: string; // The user-friendly name of the SPL token
+  symbol: string; // The shorthand ticker symbol of the SPL token
+  decimals: number; // Decimal precision for the token mint (0-9)
+  uri: string; // Off-chain metadata URI (e.g., pointing to a JSON metadata file)
 }
 
 type RegistryFormData = {
@@ -93,16 +92,15 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Token Metadata Form State
+  // State storing the configuration details for the SPL token to be minted
   const [tokenData, setTokenData] = useState<TokenMetadataFormData>({
     name: "",
     symbol: "",
     decimals: 6,
-    //initialSupply: "1000",
     uri: "",
   });
 
-  // Asset Registry Form State
+  // State storing the asset registry account information
   const [registryData, setRegistryData] = useState<AssetRegistryFormData>({
     assetName: "",
     assetSymbol: "",
@@ -154,14 +152,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
       newErrors.decimals = "Decimals must be between 0 and 9";
     }
 
-    // if (!tokenData.initialSupply.trim()) {
-    //   newErrors.initialSupply = "Initial supply is required";
-    // } else if (
-    //   Number.isNaN(Number(tokenData.initialSupply)) ||
-    //   Number(tokenData.initialSupply) <= 0
-    // ) {
-    //   newErrors.initialSupply = "Please enter a valid supply amount";
-    // }
+    // (Token supply initialization is handled directly on-chain during minting, so no client validation needed here)
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -199,7 +190,6 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
           ...tokenData,
           symbol: tokenData.symbol.toUpperCase(),
           decimals: Number(tokenData.decimals),
-          //initialSupply: tokenData.initialSupply,
         },
       };
 
@@ -319,24 +309,8 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
         console.log("Tx error: ", { error });
       }
 
-      // Call optional onSubmit callback
-      // if (onSubmit) {
-      //   onSubmit(submissionData);
-      // }
-
-      // Reset form
-      // setRegistryData({
-      //   assetSymbol: "",
-      //   assetIsin: "",
-      //   legalDocUri: "",
-      //   assetType: 0,
-      // });
-      // setTokenData({
-      //   name: "",
-      //   symbol: "",
-      //   decimals: 6,
-      //   initialSupply: "",
-      // });
+      // Form submission successfully initiated; reset form or navigate as needed.
+      // Resetting is currently handled by wallet redirection/status reload.
     } catch (error) {
       console.error("Transaction failed:", error);
       toast.warning("Transaction Failed", {
@@ -569,25 +543,7 @@ export function CreateAssetForm({ onSubmit }: CreateAssetFormProps) {
               )}
             </div>
 
-            {/*<div className="space-y-2">
-              <Label htmlFor="initialSupply" className="text-foreground">
-                Initial Supply <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="initialSupply"
-                placeholder="1000000"
-                value={tokenData.initialSupply}
-                onChange={(e) =>
-                  setTokenData({ ...tokenData, initialSupply: e.target.value })
-                }
-                className="bg-secondary/50 border-border focus:border-solana-purple focus:ring-solana-purple/20"
-              />
-              {errors.initialSupply && (
-                <p className="text-xs text-destructive">
-                  {errors.initialSupply}
-                </p>
-              )}
-            </div>*/}
+            {/* Token supply input is omitted as default initial supply is handled directly on-chain during initialization */}
           </div>
 
           <div className="p-4 rounded-xl bg-solana-purple/10 border border-solana-purple/20">

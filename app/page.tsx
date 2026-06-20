@@ -21,15 +21,15 @@ import { autoDiscover, createClient } from "@solana/client";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
-  // const [assetRegistryData, setAssetRegistryData] =
-  //   useState<AssetRegistryUI[]>();
-  // const [tokenMetadata, setTokenMetadata] = useState<TokenMetadataUI[]>();
+  // Initialize the Solana client configuration to connect to Devnet and autodiscover standard wallets
   const client = createClient({
     endpoint: "https://api.devnet.solana.com",
     walletConnectors: autoDiscover(),
   });
 
+  // Fetches and parses all on-chain asset registry accounts and their corresponding token metadata
   const setData = async () => {
+    // 1. Fetch raw program accounts for the RWA registry program on Solana Devnet
     const getAssetRegistrysAccountsRaw = await client.runtime.rpc
       .getProgramAccounts(
         address("jEXgKE9NWJihHqLVAoXZ4e2TSZ7KkV7kub8j4ojcmZC"),
@@ -41,14 +41,17 @@ export default function Home() {
 
     console.log("getAssetRegistrysAccountsRaw: ", getAssetRegistrysAccountsRaw);
 
+    // 2. Filter accounts by size (space = 380 bytes) corresponding to the AssetRegistry account layout
     const getProgramAccounts = getAssetRegistrysAccountsRaw.filter(
       (account) => Number(account.account.space) === 380,
     );
 
+    // 3. Extract public keys/addresses of the filtered accounts
     const accountsRaw = getProgramAccounts.map((account) =>
       address(account.pubkey.toString()),
     );
 
+    // 4. Batch fetch and decode complete account structures using the program client
     const accounts: any = await programClient.fetchAllAssetRegistry(
       client.runtime.rpc,
       accountsRaw,
@@ -56,17 +59,16 @@ export default function Home() {
 
     const assetRegistryAccounts: AssetRegistryData[] = accounts;
 
+    // 5. Transform deserialized program data into UI-friendly structures
     const assetRegistryData = assetRegistryAccounts.map((assetregistry) => {
       return transformAssetAccount(assetregistry);
     });
 
-    //setAssetRegistryData(assetRegistryData);
-
+    // 6. Fetch SPL token metadata (mints, supplies, metadata accounts) associated with the assets
     const tokenMetadata = await getTokenMetadataByAssetRegistryCollection(
       assetRegistryAccounts,
     );
 
-    //setTokenMetadata(tokenMetadata);
     return {
       assetRegistryData,
       tokenMetadata,

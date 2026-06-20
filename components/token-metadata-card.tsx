@@ -60,8 +60,7 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
 
   const solscanUrl = `https://solscan.io/token/${token.mint}`;
 
-  const onIncrement = async (e: MouseEvent) => {
-    console.log("e: ", { e });
+  const onIncrement = async () => {
     console.log("token: ", { token });
     try {
       if (!walletAddress) return;
@@ -242,7 +241,7 @@ export function TokenMetadataCard({ token }: TokenMetadataCardProps) {
         </a>
 
         <Button
-          onClick={async (e) => await onIncrement(e)}
+          onClick={onIncrement}
           className="flex items-center justify-center gap-2 w-full py-5 rounded-xl bg-gradient-to-r to-solana-green/20 from-solana-purple/20 border border-solana-green/30 text-foreground hover:border-solana-green/60 transition-all group/link"
         >
           <span className="text-sm font-medium">
